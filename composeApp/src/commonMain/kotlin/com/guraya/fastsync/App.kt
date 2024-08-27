@@ -107,7 +107,7 @@ fun App(viewModel: MainViewModel, onFabClick: () -> Unit = { viewModel.addShares
                 content = { padding ->
                     println(padding)
                     MainScreen(
-                        modifier = Modifier.padding(padding).padding(start = 16.dp, end = 16.dp),
+                        modifier = Modifier.padding(padding).padding(top = 8.dp,start = 16.dp, end = 16.dp),
                         screenState = screenState,
                         snackbarHostState = snackbarHostState,
                         onGetShares = { viewModel.getShares() },
