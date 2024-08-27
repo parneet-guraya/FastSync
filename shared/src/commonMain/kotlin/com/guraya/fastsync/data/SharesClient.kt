@@ -27,4 +27,12 @@ open class SharesClient() {
     ): Response<Unit?> {
         return Response.Success(null)
     }
+
+    open suspend fun deleteShares(
+        shares: List<Int>,
+        client: HttpClient = httpClient()
+    ): Response<Unit?> {
+        return Response.Success(null)
+    }
+
 }

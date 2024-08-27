@@ -65,7 +65,6 @@ import com.guraya.fastsync.ui.Shares
 import com.guraya.fastsync.ui.SharesTabRow
 import com.guraya.fastsync.ui.mainScreenDestinations
 import fastsync.composeapp.generated.resources.Res
-import fastsync.composeapp.generated.resources.compose_multiplatform
 import fastsync.composeapp.generated.resources.delete_24
 import fastsync.composeapp.generated.resources.description_24
 import fastsync.composeapp.generated.resources.download_24
@@ -114,6 +113,7 @@ fun App(viewModel: MainViewModel, onFabClick: () -> Unit = { viewModel.addShares
                         onGetShares = { viewModel.getShares() },
                         onGetSelfShares = { viewModel.getMyShares() },
                         onTransfer = { viewModel.transfer(share = it) },
+                        onDelete = { viewModel.deleteShares(listOf(it.id!!)) },
                         onHostUpdate = { host, port -> viewModel.updateLocalHost(host, port) },
                         onChooseDirectory = { viewModel.chooseDirectory() },
                         navController = navController
@@ -148,6 +148,7 @@ fun MainScreen(
     onGetShares: () -> Unit,
     onGetSelfShares: () -> Unit,
     onTransfer: (share: Share) -> Unit,
+    onDelete: (share: Share) -> Unit,
     onHostUpdate: (host: String, port: String) -> Unit,
     onChooseDirectory: () -> Unit,
     navController: NavHostController
@@ -179,12 +180,7 @@ fun MainScreen(
                             isSelfSharesList = true,
                             sharesList = mainScreenData.selfSharesList,
                             onGetShares = onGetSelfShares,
-                            onAction = {
-                                // delete self share
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Does Nothing!!")
-                                }
-                            }
+                            onAction = onDelete
                         )
                     }
 

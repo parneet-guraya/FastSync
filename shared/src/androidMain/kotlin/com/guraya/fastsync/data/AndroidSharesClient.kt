@@ -6,11 +6,15 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class AndroidSharesClient() : SharesClient() {
 
@@ -61,6 +65,21 @@ class AndroidSharesClient() : SharesClient() {
                 contentType(ContentType.Application.Json)
                 setBody(shares)
             }
+            Response.Success(null)
+        } catch (e: Exception) {
+            println("Error $e")
+            Response.Error(throwable = e)
+        }
+    }
+
+    override suspend fun deleteShares(listOfIds: List<Int>, client: HttpClient): Response<Unit?> {
+        return try {
+            val response =
+                httpClient().delete(urlString = "${hostWithPort}/mobile_shares") {
+                    val encodedData = Json.encodeToString(listOfIds)
+                    parameter("id", encodedData)
+                }
+            println("Delete share response $response")
             Response.Success(null)
         } catch (e: Exception) {
             println("Error $e")

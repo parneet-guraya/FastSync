@@ -130,6 +130,32 @@ open class MainViewModel(
         }
     }
 
+fun deleteShares(listOfShareIds: List<Int>) {
+        viewModelScope.launch {
+//            _screenState.value = _screenState.value.copy(
+//                screenData = _screenState.value.screenData.copy(isUploadingShares = true)
+//            )
+
+            try {
+                sharesClient.deleteShares(listOfShareIds)
+//                _screenState.value = _screenState.value.copy(
+//                    screenData = _screenState.value.screenData.copy(
+//                        isUploadingShares = false,
+//                        isUploadSuccess = true
+//                    )
+//                )
+            } catch (e: Exception) {
+//                _screenState.value = _screenState.value.copy(
+//                    screenData = _screenState.value.screenData.copy(
+//                        isUploadingShares = false,
+//                        isUploadSuccess = false
+//                    ),
+//                    errorMessage = "Uploading Error: ${e.message}"
+//                )
+            }
+        }
+    }
+
     open fun updateLocalHost(host: String, port: String) {
         sharesClient.host = host
         sharesClient.port = port.toInt()

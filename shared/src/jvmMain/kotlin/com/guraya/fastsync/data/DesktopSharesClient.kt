@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.converter
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -108,6 +109,21 @@ class DesktopSharesClient : SharesClient() {
                 }.body<List<Share>>()
             println(response as List<Share>)
             Response.Success(response)
+        } catch (e: Exception) {
+            println("Error $e")
+            Response.Error(throwable = e)
+        }
+    }
+
+    override suspend fun deleteShares(listOfIds: List<Int>, client: HttpClient): Response<Unit?> {
+        return try {
+            val response =
+                httpClient().delete(urlString = "${hostWithPort}/desktop_shares") {
+                    val encodedData = Json.encodeToString(listOfIds)
+                    parameter("id", encodedData)
+                }
+            println("Delete share response $response")
+            Response.Success(null)
         } catch (e: Exception) {
             println("Error $e")
             Response.Error(throwable = e)
