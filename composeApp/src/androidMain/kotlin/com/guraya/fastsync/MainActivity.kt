@@ -41,25 +41,23 @@ class MainActivity : ComponentActivity() {
                     val filesPathList = mutableListOf<String>()
                     if (intent.data != null) {
                         // single selection
-                        println("intent.data.path ${intent.data?.path}")
                         filesPathList.add(intent.data?.path!!.substringAfter(":"))
                     } else if (intent.clipData != null) {
                         //multiple selections
-                        for (i in 0..intent.clipData?.itemCount!!) {
-                            val encodedPath = intent.clipData?.getItemAt(0)?.uri
+                        for (i in 0..< intent.clipData?.itemCount!!) {
+                            val encodedPath = intent.clipData?.getItemAt(i)?.uri
                             val decodedPath = URLDecoder.decode(
                                 encodedPath.toString(),
                                 StandardCharsets.UTF_8.name()
                             )
 
-                            filesPathList.add(decodedPath.substringAfter(":"))
+                            filesPathList.add(decodedPath.substringAfterLast(":"))
                         }
 
                     }
                     filesPathList.forEachIndexed { i, path ->
                         println("file $path")
                         filesPathList[i] = "storage/self/primary/$path"
-                        println(filesPathList)
                     }
                     viewModel.uploadShares(filesPathList.map {
                         Share(

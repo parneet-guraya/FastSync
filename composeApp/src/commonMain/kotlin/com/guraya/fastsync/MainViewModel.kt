@@ -80,7 +80,7 @@ open class MainViewModel(
         }
     }
 
-    open fun addShares() {
+    fun addShares() {
         viewModelScope.launch {
             // wrapper around platform files
             try {
@@ -89,6 +89,7 @@ open class MainViewModel(
                     title = "Pick File"
                 )
                 if (platformFiles != null) {
+                    println("MainViewModel file pick result $platformFiles")
                     uploadShares(platformFiles.map {
                         Share(it.name, it.path?.substringBeforeLast("/")!!)
                     })
