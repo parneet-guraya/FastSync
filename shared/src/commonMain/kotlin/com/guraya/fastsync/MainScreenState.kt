@@ -10,6 +10,7 @@ data class MainScreenState(
 
 data class MainScreenData(
     val sharesList: List<Share>? = null,
+    val selfSharesList: List<Share>? = null,
     val isUploadingShares: Boolean = false,
     val isUploadSuccess: Boolean = false
 )

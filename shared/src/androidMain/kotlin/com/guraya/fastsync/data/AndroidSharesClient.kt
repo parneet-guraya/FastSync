@@ -29,9 +29,24 @@ class AndroidSharesClient() : SharesClient() {
         return getDesktopShares(client)
     }
 
+    override suspend fun getMyShares(client: HttpClient): Response<List<Share>> {
+        return getSelfShares(client)
+    }
+
     private suspend fun getDesktopShares(client: HttpClient): Response<List<Share>> {
         return try {
             val response = client.get(urlString = "${hostWithPort}/desktop_shares").body<List<Share>>()
+            println(response as List<Share>)
+            Response.Success(response)
+        } catch (e: Exception) {
+            println("Error $e")
+            Response.Error(throwable = e)
+        }
+    }
+    private suspend fun getSelfShares(client: HttpClient): Response<List<Share>> {
+        return try {
+            val response =
+                client.get(urlString = "${hostWithPort}/mobile_shares").body<List<Share>>()
             println(response as List<Share>)
             Response.Success(response)
         } catch (e: Exception) {

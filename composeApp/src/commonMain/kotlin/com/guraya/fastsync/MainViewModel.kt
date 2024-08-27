@@ -46,6 +46,32 @@ open class MainViewModel(
         }
     }
 
+      fun getMyShares() {
+        viewModelScope.launch {
+            _screenState.value = _screenState.value.copy(loading = true, screenData = _screenState.value.screenData.copy(isUploadingShares = false, isUploadSuccess = false))
+            val response = sharesClient.getMyShares()
+            _screenState.value =_screenState.value.copy(loading = false, screenData = _screenState.value.screenData.copy(isUploadingShares = false, isUploadSuccess = false))
+            when (response) {
+                is Response.Success -> _screenState.value =
+                    _screenState.value.copy(
+                        loading = false,
+                        screenData = _screenState.value.screenData.copy(selfSharesList = response.data, isUploadingShares = false, isUploadSuccess = false),
+                        errorMessage = null
+                    )
+
+                is Response.Error -> _screenState.value =
+                    _screenState.value.copy(
+                        loading = false,
+                        screenData = _screenState.value.screenData.copy(sharesList = null, isUploadingShares = false, isUploadSuccess = false),
+                        errorMessage = response.throwable.message
+                    )
+            }
+
+        }
+    }
+
+
+
     open fun transfer(share: Share) {}
 
     open fun chooseDirectory() {

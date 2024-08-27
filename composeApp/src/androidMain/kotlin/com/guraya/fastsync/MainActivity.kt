@@ -10,6 +10,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.guraya.fastsync.data.Share
+import fastsync.composeapp.generated.resources.Res
+import fastsync.composeapp.generated.resources.download_24
 import io.github.vinceglb.filekit.core.FileKit
 import java.io.File
 import java.net.URLDecoder
@@ -84,6 +86,6 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 private fun FieldPreview() {
-    ShareItem(title = "File.txt") {}
+    ShareItem(title = "File.txt", actionIcon = Res.drawable.download_24) {}
 }
 

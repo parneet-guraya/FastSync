@@ -15,6 +15,12 @@ open class SharesClient() {
         return Response.Success(emptyList())
     }
 
+
+    open suspend fun getMyShares(client: HttpClient = httpClient()): Response<List<Share>> {
+        return Response.Success(emptyList())
+    }
+
+
     open suspend fun createShares(
         shares: List<Share>,
         client: HttpClient = httpClient()

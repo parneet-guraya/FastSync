@@ -1,5 +1,6 @@
 package com.guraya.fastsync
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +35,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,14 +52,27 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.compose.FastSyncTheme
 import com.guraya.fastsync.data.Share
+import com.guraya.fastsync.ui.MyShares
+import com.guraya.fastsync.ui.Shares
+import com.guraya.fastsync.ui.SharesTabRow
+import com.guraya.fastsync.ui.mainScreenDestinations
 import fastsync.composeapp.generated.resources.Res
+import fastsync.composeapp.generated.resources.compose_multiplatform
+import fastsync.composeapp.generated.resources.delete_24
 import fastsync.composeapp.generated.resources.description_24
 import fastsync.composeapp.generated.resources.download_24
 import fastsync.composeapp.generated.resources.folder_24
 import fastsync.composeapp.generated.resources.refresh_24
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -70,12 +83,28 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App(viewModel: MainViewModel, onFabClick: () -> Unit = { viewModel.addShares() }) {
     val screenState by viewModel.screenState.collectAsStateWithLifecycle(lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current)
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val navController = rememberNavController()
+    val currentBackStack by navController.currentBackStackEntryAsState()
+    val currentDestination = currentBackStack?.destination
+    val currentScreen =
+        mainScreenDestinations.find { it.route == currentDestination?.route } ?: Shares
     FastSyncTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             Scaffold(snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             },
-                topBar = { TopAppBar(title = { Text("Fast Sync") }) },
+                topBar = {
+                    SharesTabRow(
+                        destination = mainScreenDestinations,
+                        onSelected = { shareDestination ->
+                            navController.navigateSingleTopTo(
+                                shareDestination.route
+                            )
+                        },
+                        currentScreen = currentScreen
+                    )
+                },
                 content = { padding ->
                     println(padding)
                     MainScreen(
@@ -83,10 +112,11 @@ fun App(viewModel: MainViewModel, onFabClick: () -> Unit = { viewModel.addShares
                         screenState = screenState,
                         snackbarHostState = snackbarHostState,
                         onGetShares = { viewModel.getShares() },
+                        onGetSelfShares = { viewModel.getMyShares() },
                         onTransfer = { viewModel.transfer(share = it) },
                         onHostUpdate = { host, port -> viewModel.updateLocalHost(host, port) },
-                        onChooseDirectory = { viewModel.chooseDirectory() }
-
+                        onChooseDirectory = { viewModel.chooseDirectory() },
+                        navController = navController
                     )
                 },
                 floatingActionButton = {
@@ -116,9 +146,11 @@ fun MainScreen(
     screenState: MainScreenState,
     snackbarHostState: SnackbarHostState,
     onGetShares: () -> Unit,
+    onGetSelfShares: () -> Unit,
     onTransfer: (share: Share) -> Unit,
     onHostUpdate: (host: String, port: String) -> Unit,
-    onChooseDirectory: () -> Unit
+    onChooseDirectory: () -> Unit,
+    navController: NavHostController
 ) {
     val scope = rememberCoroutineScope()
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -127,35 +159,37 @@ fun MainScreen(
             onHostUpdate(host, port)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = "Shares",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            IconButton(onClick = onChooseDirectory) {
-                Icon(painter = painterResource(Res.drawable.folder_24), null)
-            }
-            IconButton(onClick = onGetShares) {
-                Icon(painter = painterResource(Res.drawable.refresh_24), null)
-            }
-        }
 
         screenState.screenData.let { mainScreenData ->
             if (screenState.loading) {
                 CircularProgressIndicator(modifier = Modifier.wrapContentSize())
             } else {
-                mainScreenData.sharesList?.let {
-                    // bottom padding shouldn't be hardcoded
-                    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
-                        items(it) {
-                            ShareItem(title = it.name) {
-                                onTransfer(it)
-                            }
-                        }
+                NavHost(navController = navController, startDestination = Shares.route) {
+                    composable(route = Shares.route) {
+                        SharesList(
+                            sharesList = mainScreenData.sharesList,
+                            onChooseDirectory = onChooseDirectory,
+                            onGetShares = onGetShares,
+                            onAction = onTransfer
+                        )
                     }
+
+                    composable(route = MyShares.route) {
+                        SharesList(
+                            isSelfSharesList = true,
+                            sharesList = mainScreenData.selfSharesList,
+                            onGetShares = onGetSelfShares,
+                            onAction = {
+                                // delete self share
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Does Nothing!!")
+                                }
+                            }
+                        )
+                    }
+
                 }
+
             }
 
             if (mainScreenData.isUploadingShares) {
@@ -180,7 +214,12 @@ fun MainScreen(
 }
 
 @Composable
-fun ShareItem(modifier: Modifier = Modifier, title: String, onClick: () -> Unit) {
+fun ShareItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    @DrawableRes actionIcon: DrawableResource,
+    onClick: () -> Unit
+) {
     Card(
         modifier = modifier.fillMaxWidth().wrapContentSize(),
         border = BorderStroke(2.dp, Color.Black)
@@ -200,12 +239,52 @@ fun ShareItem(modifier: Modifier = Modifier, title: String, onClick: () -> Unit)
             )
             Spacer(modifier = Modifier.width(2.dp))
             IconButton(onClick = onClick) {
-                Icon(painter = painterResource(Res.drawable.download_24), null)
+                Icon(painter = painterResource(actionIcon), null)
             }
         }
     }
 }
 
+@Composable
+fun SharesList(
+    modifier: Modifier = Modifier,
+    isSelfSharesList: Boolean = false,
+    sharesList: List<Share>?,
+    onChooseDirectory: () -> Unit = {},
+    onGetShares: () -> Unit,
+    onAction: (share: Share) -> Unit
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = if (isSelfSharesList) MyShares.name else Shares.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (!isSelfSharesList) {
+                IconButton(onClick = onChooseDirectory) {
+                    Icon(painter = painterResource(Res.drawable.folder_24), null)
+                }
+            }
+            IconButton(onClick = onGetShares) {
+                Icon(painter = painterResource(Res.drawable.refresh_24), null)
+            }
+        }
+        sharesList?.let {
+            // bottom padding shouldn't be hardcoded
+            LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+                items(sharesList) { share ->
+                    val actionIcon =
+                        if (isSelfSharesList) Res.drawable.delete_24 else Res.drawable.download_24
+                    ShareItem(title = share.name, actionIcon = actionIcon) {
+                        onAction(share)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun AddHostField(
@@ -274,4 +353,21 @@ fun LoadingDialog() =
                 Text("Uploading...")
             }
         }
+    }
+
+fun NavHostController.navigateSingleTopTo(route: String) =
+    this.navigate(route) {
+        // Pop up to the start destination of the graph to
+        // avoid building up a large stack of destinations
+        // on the back stack as users select items
+        popUpTo(
+            route = this@navigateSingleTopTo.graph.findStartDestination().route!!
+        ) {
+            saveState = true
+        }
+        // Avoid multiple copies of the same destination when
+        // reselecting the same item
+        launchSingleTop = true
+        // Restore state when reselecting a previously selected item
+        restoreState = true
     }

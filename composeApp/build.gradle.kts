@@ -32,7 +32,6 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-//            implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
@@ -43,6 +42,8 @@ kotlin {
             implementation("io.github.vinceglb:filekit-core:0.8.1")
             implementation("io.github.vinceglb:filekit-compose:0.8.1")
 
+                // navigation
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -91,6 +92,7 @@ android {
 }
 dependencies {
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.navigation.compose)
 }
 
 compose.desktop {
